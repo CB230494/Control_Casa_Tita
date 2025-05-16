@@ -23,16 +23,13 @@ TRABAJADORES_BASE = [
     ["Maycol Mauricio Mata Zeledon", "207060735"]
 ]
 
-# === CARGA DE DATOS DESDE SHEETS ===
+# === CARGA DE DATOS ===
 data = ws.get_all_records()
 df = pd.DataFrame(data)
 
-# === DEPURACIÓN: mostrar las columnas reales detectadas ===
-st.write("Columnas cargadas:", df.columns.tolist())
-
-# === EVITAR ERRORES SI AÚN NO HAY DATOS ===
+# === SEGURIDAD: detener si faltan columnas críticas ===
 if "Tipo" not in df.columns:
-    st.error("La columna 'Tipo' no fue encontrada. Verifica que esté bien escrita, sin espacios ocultos.")
+    st.error("La columna 'Tipo' no fue encontrada.")
     st.stop()
 
 # === SEPARAR POR TIPO ===
@@ -97,11 +94,15 @@ elif modo == "Dashboard":
     col3.metric("Saldo Disponible", f"₡{saldo:,.0f}")
 
     st.markdown("### Asistencia")
-    st.dataframe(df_asistencia)
+    if not df_asistencia.empty:
+        st.dataframe(df_asistencia)
+    else:
+        st.info("No hay registros de asistencia aún.")
 
     st.markdown("### Gastos")
-    st.dataframe(df_gastos)
-
     if not df_gastos.empty:
+        st.dataframe(df_gastos)
         grafico = df_gastos.groupby("Categoría")["Monto"].sum().reset_index()
         st.bar_chart(grafico.set_index("Categoría"))
+    else:
+        st.info("No hay registros de gastos aún.")
