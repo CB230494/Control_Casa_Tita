@@ -23,9 +23,17 @@ TRABAJADORES_BASE = [
     ["Maycol Mauricio Mata Zeledon", "207060735"]
 ]
 
-# === CARGA DE DATOS ===
+# === CARGA DE DATOS DESDE SHEETS ===
 data = ws.get_all_records()
 df = pd.DataFrame(data)
+
+# === DEPURACIÓN: mostrar las columnas reales detectadas ===
+st.write("Columnas cargadas:", df.columns.tolist())
+
+# === EVITAR ERRORES SI AÚN NO HAY DATOS ===
+if "Tipo" not in df.columns:
+    st.error("La columna 'Tipo' no fue encontrada. Verifica que esté bien escrita, sin espacios ocultos.")
+    st.stop()
 
 # === SEPARAR POR TIPO ===
 df_asistencia = df[df["Tipo"] == "Asistencia"]
@@ -42,14 +50,12 @@ if modo == "Registrar Asistencia":
 
     fecha = st.date_input("Fecha", value=date.today())
 
-    # Mostrar casillas para marcar asistencia
     st.markdown("### Marcar asistencia")
     asistencia_registro = []
     for nombre, cedula in TRABAJADORES_BASE:
         asistio = st.checkbox(nombre, value=False)
         asistencia_registro.append([nombre, cedula, "Sí" if asistio else "No"])
 
-    # Opción para agregar un trabajador nuevo
     st.markdown("---")
     st.markdown("### Agregar trabajador eventual")
     nuevo_nombre = st.text_input("Nombre del nuevo trabajador")
@@ -59,7 +65,6 @@ if modo == "Registrar Asistencia":
     if nuevo_nombre and nueva_cedula:
         asistencia_registro.append([nuevo_nombre, nueva_cedula, "Sí" if nuevo_asistio else "No"])
 
-    # Botón para guardar todo
     if st.button("Guardar asistencia"):
         for nombre, cedula, asistio in asistencia_registro:
             fila = ["Asistencia", str(fecha), nombre, cedula, asistio, "", "", ""]
