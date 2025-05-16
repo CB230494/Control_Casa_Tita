@@ -27,7 +27,6 @@ TRABAJADORES_BASE = [
 data = ws.get_all_records()
 df = pd.DataFrame(data)
 
-# === SEGURIDAD: detener si faltan columnas críticas ===
 if "Tipo" not in df.columns:
     st.error("La columna 'Tipo' no fue encontrada.")
     st.stop()
@@ -44,7 +43,6 @@ modo = st.sidebar.radio("Selecciona", ["Registrar Asistencia", "Registrar Gasto"
 # === REGISTRAR ASISTENCIA ===
 if modo == "Registrar Asistencia":
     st.subheader("Registro de Asistencia")
-
     fecha = st.date_input("Fecha", value=date.today())
 
     st.markdown("### Marcar asistencia")
@@ -93,16 +91,39 @@ elif modo == "Dashboard":
     col2.metric("Gastado", f"₡{total_gastado:,.0f}")
     col3.metric("Saldo Disponible", f"₡{saldo:,.0f}")
 
+    st.markdown("### Filtrar por fecha")
+    fecha_inicio = st.date_input("Desde", value=date.today())
+    fecha_fin = st.date_input("Hasta", value=date.today())
+
+    filtro_asistencia = df_asistencia[
+        (pd.to_datetime(df_asistencia["Fecha"]) >= pd.to_datetime(fecha_inicio)) &
+        (pd.to_datetime(df_asistencia["Fecha"]) <= pd.to_datetime(fecha_fin))
+    ]
+    filtro_gastos = df_gastos[
+        (pd.to_datetime(df_gastos["Fecha"]) >= pd.to_datetime(fecha_inicio)) &
+        (pd.to_datetime(df_gastos["Fecha"]) <= pd.to_datetime(fecha_fin))
+    ]
+
     st.markdown("### Asistencia")
-    if not df_asistencia.empty:
-        st.dataframe(df_asistencia)
+    columnas_asistencia = ["Fecha", "Nombre", "Asistió"]
+    if not filtro_asistencia.empty:
+        st.dataframe(filtro_asistencia[columnas_asistencia])
     else:
-        st.info("No hay registros de asistencia aún.")
+        st.info("No hay registros de asistencia en este rango.")
 
     st.markdown("### Gastos")
-    if not df_gastos.empty:
-        st.dataframe(df_gastos)
-        grafico = df_gastos.groupby("Categoría")["Monto"].sum().reset_index()
-        st.bar_chart(grafico.set_index("Categoría"))
+    columnas_gastos = ["Fecha", "Descripción", "Monto", "Categoría"]
+    if not filtro_gastos.empty:
+        st.dataframe(filtro_gastos[columnas_gastos])
     else:
-        st.info("No hay registros de gastos aún.")
+        st.info("No hay registros de gastos en este rango.")
+
+    st.markdown("### Desglose por Categoría")
+    if not filtro_gastos.empty:
+        desglose_categoria = filtro_gastos.groupby("Categoría")["Monto"].sum().reset_index()
+        st.dataframe(desglose_categoria)
+
+    st.markdown("### Desglose por Trabajador")
+    if not filtro_asistencia.empty:
+        desglose_trabajador = filtro_asistencia[filtro_asistencia["Asistió"] == "Sí"].groupby("Nombre").size().reset_index(name="Días asistidos")
+        st.dataframe(desglose_trabajador)
