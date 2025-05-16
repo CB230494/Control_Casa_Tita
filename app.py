@@ -83,7 +83,8 @@ elif modo == "Registrar Gasto":
 elif modo == "Dashboard":
     st.subheader("Resumen del Proyecto")
 
-    total_gastado = df_gastos["Monto"].astype(float).sum() if not df_gastos.empty else 0
+    df_gastos["Monto"] = pd.to_numeric(df_gastos["Monto"], errors="coerce").fillna(0)
+    total_gastado = df_gastos["Monto"].sum()
     saldo = MONTO_INICIAL - total_gastado
 
     col1, col2, col3 = st.columns(3)
@@ -114,13 +115,16 @@ elif modo == "Dashboard":
     st.markdown("### Gastos")
     columnas_gastos = ["Fecha", "Descripción", "Monto", "Categoría"]
     if not filtro_gastos.empty:
-        st.dataframe(filtro_gastos[columnas_gastos])
+        gastos_mostrados = filtro_gastos[columnas_gastos].copy()
+        gastos_mostrados["Monto"] = gastos_mostrados["Monto"].apply(lambda x: f"₡{x:,.0f}")
+        st.dataframe(gastos_mostrados)
     else:
         st.info("No hay registros de gastos en este rango.")
 
     st.markdown("### Desglose por Categoría")
     if not filtro_gastos.empty:
         desglose_categoria = filtro_gastos.groupby("Categoría")["Monto"].sum().reset_index()
+        desglose_categoria["Monto"] = desglose_categoria["Monto"].apply(lambda x: f"₡{x:,.0f}")
         st.dataframe(desglose_categoria)
 
     st.markdown("### Desglose por Trabajador")
