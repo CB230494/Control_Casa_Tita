@@ -89,7 +89,7 @@ elif modo == "Dashboard":
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Monto Inicial", f"₡{MONTO_INICIAL:,.0f}")
-    col2.metric("Gastado", f"₡{total_gastado:,.0f}")
+    col2.metric("Gastos", f"₡{total_gastado:,.0f}")
     col3.metric("Saldo Disponible", f"₡{saldo:,.0f}")
 
     st.markdown("### Filtrar por fecha")
